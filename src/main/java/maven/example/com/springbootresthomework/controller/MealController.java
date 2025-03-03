@@ -65,7 +65,6 @@ public class MealController {
      */
     @PostMapping("/user/{userId}")
     public ResponseEntity<String> createMeal(@PathVariable Long userId, @Valid @RequestBody MealDTO mealDTO) {
-        System.out.println("Создание приема пищи для пользователя: " + userId);
         mealService.createMeal(userId, mealDTO);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(MessageConstants.MEAL_CREATED);

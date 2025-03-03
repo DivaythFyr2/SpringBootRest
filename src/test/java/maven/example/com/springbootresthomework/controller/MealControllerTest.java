@@ -40,6 +40,10 @@ class MealControllerTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     //Тестовые данные
+    private static final String URI_TEMPLATE_MEALS = "/meals";
+    private static final String URI_TEMPLATE_MEALS_USER_USER_ID = "/meals/user/{userId}";
+    private static final String URI_TEMPLATE_MEALS_ID = "/meals/{id}";
+
     private static final Long VALID_USER_ID = 1L;
     private static final Long VALID_MEAL_ID = 10L;
     private static final Long INVALID_ID = 999L;
@@ -57,7 +61,7 @@ class MealControllerTest {
     void getAllMeals_ShouldReturnAllMeals() throws Exception {
         when(mealService.getAllMeals()).thenReturn(TEST_MEAL_LIST);
 
-        mockMvc.perform(get("/meals"))
+        mockMvc.perform(get(URI_TEMPLATE_MEALS))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.size()", is(1)))
                 .andExpect(jsonPath("$[0].name", is(TEST_MEAL_DTO.getName())));
@@ -69,7 +73,7 @@ class MealControllerTest {
     void getMealsByUserId_WhenUserExists_ShouldReturnMeals() throws Exception {
         when(mealService.getMealsByUserId(VALID_USER_ID)).thenReturn(TEST_MEAL_LIST);
 
-        mockMvc.perform(get("/meals/user/{userId}", VALID_USER_ID))
+        mockMvc.perform(get(URI_TEMPLATE_MEALS_USER_USER_ID, VALID_USER_ID))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.size()", is(1)))
                 .andExpect(jsonPath("$[0].name", is(TEST_MEAL_DTO.getName())));
@@ -81,7 +85,7 @@ class MealControllerTest {
     void getMealsByUserId_WhenUserDoesNotExist_ShouldReturnNotFound() throws Exception {
         when(mealService.getMealsByUserId(INVALID_ID)).thenThrow(new EntityNotFoundException(MessageConstants.USER_NOT_FOUND));
 
-        mockMvc.perform(get("/meals/user/{userId}", INVALID_ID))
+        mockMvc.perform(get(URI_TEMPLATE_MEALS_USER_USER_ID, INVALID_ID))
                 .andExpect(status().isNotFound())
                 .andExpect(content().string(MessageConstants.USER_NOT_FOUND));
 
@@ -92,7 +96,7 @@ class MealControllerTest {
     void getMealById_WhenMealExists_ShouldReturnMeal() throws Exception {
         when(mealService.getMealById(VALID_MEAL_ID)).thenReturn(TEST_MEAL_DTO);
 
-        mockMvc.perform(get("/meals/{mealId}", VALID_MEAL_ID))
+        mockMvc.perform(get(URI_TEMPLATE_MEALS_ID, VALID_MEAL_ID))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name", is(TEST_MEAL_DTO.getName())))
                 .andExpect(jsonPath("$.calories", is(TEST_MEAL_DTO.getCalories())));
@@ -104,7 +108,7 @@ class MealControllerTest {
     void getMealById_WhenMealDoesNotExist_ShouldReturnNotFound() throws Exception {
         when(mealService.getMealById(INVALID_ID)).thenThrow(new EntityNotFoundException(MessageConstants.MEAL_NOT_FOUND));
 
-        mockMvc.perform(get("/meals/{mealId}", INVALID_ID))
+        mockMvc.perform(get(URI_TEMPLATE_MEALS_ID, INVALID_ID))
                 .andExpect(status().isNotFound())
                 .andExpect(content().string(MessageConstants.MEAL_NOT_FOUND));
 
@@ -115,7 +119,7 @@ class MealControllerTest {
     void createMeal_ShouldReturnCreated() throws Exception {
         doNothing().when(mealService).createMeal(VALID_USER_ID, TEST_MEAL_DTO);
 
-        mockMvc.perform(post("/meals/user/{userId}", VALID_USER_ID)
+        mockMvc.perform(post(URI_TEMPLATE_MEALS_USER_USER_ID, VALID_USER_ID)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(TEST_MEAL_DTO)))
                 .andExpect(status().isCreated())
@@ -129,13 +133,62 @@ class MealControllerTest {
         doThrow(new EntityNotFoundException(MessageConstants.USER_NOT_FOUND))
                 .when(mealService).createMeal(eq(INVALID_ID), any(MealDTO.class));
 
-        mockMvc.perform(post("/meals/user/{userId}", INVALID_ID)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"name\": \"Pasta\", \"calories\": 500, \"userId\": 999}"))
-                .andDo(print())
+        mockMvc.perform(post(URI_TEMPLATE_MEALS_USER_USER_ID, INVALID_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(TEST_MEAL_DTO)))
                 .andExpect(status().isNotFound())
                 .andExpect(content().string(MessageConstants.USER_NOT_FOUND));
 
-        verify(mealService, times(1)).createMeal(INVALID_ID, TEST_MEAL_DTO);
+        verify(mealService, times(1)).createMeal(eq(INVALID_ID), any(MealDTO.class));
+    }
+
+    @Test
+    void updateMeal_ShouldReturnOk() throws Exception {
+        doNothing().when(mealService).updateMeal(VALID_MEAL_ID, TEST_MEAL_DTO);
+
+        mockMvc.perform(put(URI_TEMPLATE_MEALS_ID, VALID_MEAL_ID)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(TEST_MEAL_DTO)))
+                .andExpect(status().isOk())
+                .andExpect(content().string(MessageConstants.MEAL_UPDATED));
+
+        verify(mealService, times(1)).updateMeal(VALID_MEAL_ID, TEST_MEAL_DTO);
+    }
+
+    @Test
+    void updateMeal_WhenUserDoesNotExist_ShouldReturnNotFound() throws Exception {
+        doThrow(new EntityNotFoundException(MessageConstants.MEAL_NOT_FOUND))
+                .when(mealService).updateMeal(INVALID_ID, TEST_MEAL_DTO);
+
+        mockMvc.perform(put(URI_TEMPLATE_MEALS_ID, INVALID_ID)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(TEST_MEAL_DTO)))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string(MessageConstants.MEAL_NOT_FOUND));
+
+        verify(mealService, times(1)).updateMeal(INVALID_ID, TEST_MEAL_DTO);
+    }
+
+    @Test
+    void deleteMeal_ShouldReturnOk() throws Exception {
+        doNothing().when(mealService).deleteMeal(VALID_MEAL_ID);
+
+        mockMvc.perform(delete(URI_TEMPLATE_MEALS_ID, VALID_MEAL_ID))
+                .andExpect(status().isOk())
+                .andExpect(content().string(MessageConstants.MEAL_DELETED));
+
+        verify(mealService, times(1)).deleteMeal(VALID_MEAL_ID);
+    }
+
+    @Test
+    void deleteMeal_WhenMealDoesNotExist_ShouldReturnNotFound() throws Exception {
+        doThrow(new EntityNotFoundException(MessageConstants.MEAL_NOT_FOUND))
+                .when(mealService).deleteMeal(INVALID_ID);
+
+        mockMvc.perform(delete(URI_TEMPLATE_MEALS_ID, INVALID_ID))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string(MessageConstants.MEAL_NOT_FOUND));
+
+        verify(mealService, times(1)).deleteMeal(INVALID_ID);
     }
 }
