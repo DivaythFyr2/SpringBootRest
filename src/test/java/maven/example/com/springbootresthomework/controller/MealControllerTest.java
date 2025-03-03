@@ -16,14 +16,11 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.hamcrest.Matchers.is;
-
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -41,8 +38,8 @@ class MealControllerTest {
 
     //Тестовые данные
     private static final String URI_TEMPLATE_MEALS = "/meals";
-    private static final String URI_TEMPLATE_MEALS_USER_USER_ID = "/meals/user/{userId}";
     private static final String URI_TEMPLATE_MEALS_ID = "/meals/{id}";
+    private static final String URI_TEMPLATE_MEALS_USER_USER_ID = "/meals/user/{userId}";
 
     private static final Long VALID_USER_ID = 1L;
     private static final Long VALID_MEAL_ID = 10L;
@@ -70,29 +67,6 @@ class MealControllerTest {
     }
 
     @Test
-    void getMealsByUserId_WhenUserExists_ShouldReturnMeals() throws Exception {
-        when(mealService.getMealsByUserId(VALID_USER_ID)).thenReturn(TEST_MEAL_LIST);
-
-        mockMvc.perform(get(URI_TEMPLATE_MEALS_USER_USER_ID, VALID_USER_ID))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.size()", is(1)))
-                .andExpect(jsonPath("$[0].name", is(TEST_MEAL_DTO.getName())));
-
-        verify(mealService, times(1)).getMealsByUserId(VALID_USER_ID);
-    }
-
-    @Test
-    void getMealsByUserId_WhenUserDoesNotExist_ShouldReturnNotFound() throws Exception {
-        when(mealService.getMealsByUserId(INVALID_ID)).thenThrow(new EntityNotFoundException(MessageConstants.USER_NOT_FOUND));
-
-        mockMvc.perform(get(URI_TEMPLATE_MEALS_USER_USER_ID, INVALID_ID))
-                .andExpect(status().isNotFound())
-                .andExpect(content().string(MessageConstants.USER_NOT_FOUND));
-
-        verify(mealService, times(1)).getMealsByUserId(INVALID_ID);
-    }
-
-    @Test
     void getMealById_WhenMealExists_ShouldReturnMeal() throws Exception {
         when(mealService.getMealById(VALID_MEAL_ID)).thenReturn(TEST_MEAL_DTO);
 
@@ -116,12 +90,36 @@ class MealControllerTest {
     }
 
     @Test
+    void getMealsByUserId_WhenUserExists_ShouldReturnMeals() throws Exception {
+        when(mealService.getMealsByUserId(VALID_USER_ID)).thenReturn(TEST_MEAL_LIST);
+
+        mockMvc.perform(get(URI_TEMPLATE_MEALS_USER_USER_ID, VALID_USER_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.size()", is(1)))
+                .andExpect(jsonPath("$[0].name", is(TEST_MEAL_DTO.getName())))
+                .andExpect(jsonPath("$[0].calories", is(TEST_MEAL_DTO.getCalories())));
+
+        verify(mealService, times(1)).getMealsByUserId(VALID_USER_ID);
+    }
+
+    @Test
+    void getMealsByUserId_WhenUserDoesNotExist_ShouldReturnNotFound() throws Exception {
+        when(mealService.getMealsByUserId(INVALID_ID)).thenThrow(new EntityNotFoundException(MessageConstants.USER_NOT_FOUND));
+
+        mockMvc.perform(get(URI_TEMPLATE_MEALS_USER_USER_ID, INVALID_ID))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string(MessageConstants.USER_NOT_FOUND));
+
+        verify(mealService, times(1)).getMealsByUserId(INVALID_ID);
+    }
+
+    @Test
     void createMeal_ShouldReturnCreated() throws Exception {
         doNothing().when(mealService).createMeal(VALID_USER_ID, TEST_MEAL_DTO);
 
         mockMvc.perform(post(URI_TEMPLATE_MEALS_USER_USER_ID, VALID_USER_ID)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(TEST_MEAL_DTO)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(TEST_MEAL_DTO)))
                 .andExpect(status().isCreated())
                 .andExpect(content().string(MessageConstants.MEAL_CREATED));
 
@@ -147,8 +145,8 @@ class MealControllerTest {
         doNothing().when(mealService).updateMeal(VALID_MEAL_ID, TEST_MEAL_DTO);
 
         mockMvc.perform(put(URI_TEMPLATE_MEALS_ID, VALID_MEAL_ID)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(TEST_MEAL_DTO)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(TEST_MEAL_DTO)))
                 .andExpect(status().isOk())
                 .andExpect(content().string(MessageConstants.MEAL_UPDATED));
 
@@ -161,8 +159,8 @@ class MealControllerTest {
                 .when(mealService).updateMeal(INVALID_ID, TEST_MEAL_DTO);
 
         mockMvc.perform(put(URI_TEMPLATE_MEALS_ID, INVALID_ID)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(TEST_MEAL_DTO)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(TEST_MEAL_DTO)))
                 .andExpect(status().isNotFound())
                 .andExpect(content().string(MessageConstants.MEAL_NOT_FOUND));
 

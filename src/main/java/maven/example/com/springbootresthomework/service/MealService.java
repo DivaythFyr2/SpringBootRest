@@ -80,11 +80,6 @@ public class MealService {
     public void createMeal(Long userId, MealDTO mealDTO) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException(MessageConstants.USER_NOT_FOUND));
-//        User user = userRepository.findById(userId)
-//                .orElseThrow(() -> {
-//                    System.out.println("Пользователь с ID " + userId + " не найден!");
-//                    return new EntityNotFoundException(MessageConstants.USER_NOT_FOUND);
-//                });
 
         Meal meal = mealMapper.toEntity(mealDTO, user);
         mealRepository.save(meal);

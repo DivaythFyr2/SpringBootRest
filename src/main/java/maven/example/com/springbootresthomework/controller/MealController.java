@@ -35,17 +35,6 @@ public class MealController {
     }
 
     /**
-     * Получить приёмы пищи конкретного пользователя.
-     *
-     * @param userId ID пользователя
-     * @return Список приёмов пищи пользователя
-     */
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<MealDTO>> getMealsByUserId(@PathVariable Long userId) {
-        return ResponseEntity.ok(mealService.getMealsByUserId(userId));
-    }
-
-    /**
      * Получить приём пищи по ID.
      *
      * @param id ID приёма пищи
@@ -54,6 +43,17 @@ public class MealController {
     @GetMapping("/{id}")
     public ResponseEntity<MealDTO> getMealById(@PathVariable Long id) {
         return ResponseEntity.ok(mealService.getMealById(id));
+    }
+
+    /**
+     * Получить приёмы пищи конкретного пользователя.
+     *
+     * @param userId ID пользователя
+     * @return Список приёмов пищи пользователя
+     */
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<MealDTO>> getMealsByUserId(@PathVariable Long userId) {
+        return ResponseEntity.ok(mealService.getMealsByUserId(userId));
     }
 
     /**
